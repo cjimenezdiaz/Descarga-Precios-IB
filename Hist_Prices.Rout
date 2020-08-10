@@ -1,0 +1,306 @@
+
+R version 4.0.1 (2020-06-06) -- "See Things Now"
+Copyright (C) 2020 The R Foundation for Statistical Computing
+Platform: x86_64-w64-mingw32/x64 (64-bit)
+
+R es un software libre y viene sin GARANTIA ALGUNA.
+Usted puede redistribuirlo bajo ciertas circunstancias.
+Escriba 'license()' o 'licence()' para detalles de distribucion.
+
+R es un proyecto colaborativo con muchos contribuyentes.
+Escriba 'contributors()' para obtener más información y
+'citation()' para saber cómo citar R o paquetes de R en publicaciones.
+
+Escriba 'demo()' para demostraciones, 'help()' para el sistema on-line de ayuda,
+o 'help.start()' para abrir el sistema de ayuda HTML con su navegador.
+Escriba 'q()' para salir de R.
+
+> # Loading the Libraries
+> suppressPackageStartupMessages({
++     if (!require("IBrokers")) install.packages("IBrokers"); library(IBrokers)
++     if (!require("dplyr")) install.packages("dplyr"); library(dplyr)
++     if (!require("parallel")) install.packages("parallel"); library(parallel)
++     if (!require("doParallel")) install.packages("doParallel"); library(doParallel)
++     if (!require("readxl")) install.packages("readxl"); library(readxl)
++     if (!require("tictoc")) install.packages("tictoc"); library(tictoc)
++     if (!require("emayili")) install.packages("emayili"); library(emayili)
++     if (!require("stringr")) install.packages("stringr"); library(stringr)
++     if (!require("ggplot2")) install.packages("ggplot2"); library(ggplot2)
++     if (!require("tidyquant")) install.packages("tidyquant"); library(tidyquant)
++     if (!require("tidyverse")) install.packages("tidyverse"); library(tidyverse)
++ })
+> 
+> # Setting the Time
+> Sys.setenv(TZ = "America/New_York")
+> 
+> # Start the Timer
+> S_Time <- Sys.time()
+> 
+> # Local Variables
+> ticket    <- read_xlsx("DDBB/Lista Carlos.xlsx", sheet = "Sheet1", col_names = TRUE)
+> first_run <- TRUE
+> 
+> # Loading more Cores
+> no_cores <- (detectCores() - 1)
+> cl       <- makeCluster(no_cores)
+> registerDoParallel(cl) 
+> 
+> # Local Dataframes
+> DDBB_Global <- NULL
+> 
+> # Realizamos la conexion con IB
+> tws <- twsConnect(clientId = 120315, port = 2000)
+> isConnected(tws)
+[1] TRUE
+> 
+> # Analysis of the strategy
+> for(i in 1:nrow(ticket)){ # i <- 1
++     
++     data  <- reqHistoricalData(tws, 
++                                twsSTK(ticket[i, 1] %>% pull(1)), 
++                                whatToShow  = 'MIDPOINT', 
++                                useRTH      = "1", 
++                                barSize     = '1 min', 
++                                duration    = "1 D", 
++                                endDateTime = paste0(gsub("-","", reqCurrentTime(tws)))) %>%
++         as.data.frame() %>%
++         select(1:4) %>%
++         `colnames<-`(c("Open", "High", "Low", "Close")) %>%
++         rownames_to_column(var = "Dates")
++      
++     Open_Price <- data %>% head(1) %>% pull(2)
++     DDBB_Delta <- data %>% 
++         dplyr::select(1, 5) %>%
++         dplyr::mutate(Delta = round((Close/Open_Price - 1)*100, digits = 2)) %>%
++         dplyr::select(1, 3) %>%
++         `colnames<-`(c("Dates", ticket[i, 1] %>% pull(1)))
++     
++     if(first_run == TRUE){
++         DDBB_Global <- bind_cols(DDBB_Global, DDBB_Delta)
++         first_run   <- FALSE
++     }else{
++         DDBB_Global <- left_join(DDBB_Global, DDBB_Delta, by = "Dates")
++     }
++ }
+TWS Message: 2 -1 2106 HMDS data farm connection is OK:ushmds 
+TWS Message: 2 -1 2158 Sec-def data farm connection is OK:secdefeu 
+waiting for TWS reply on AAPL .... done.
+waiting for TWS reply on ABBV .... done.
+waiting for TWS reply on ABT .... done.
+waiting for TWS reply on ACN .... done.
+waiting for TWS reply on ADBE .... done.
+waiting for TWS reply on ADSK .... done.
+waiting for TWS reply on AEP .... done.
+waiting for TWS reply on AES .... done.
+waiting for TWS reply on AMD .... done.
+waiting for TWS reply on AMT .... done.
+waiting for TWS reply on AMZN .... done.
+waiting for TWS reply on apps .... done.
+waiting for TWS reply on AZO .... done.
+waiting for TWS reply on BA .... done.
+waiting for TWS reply on BABA .... done.
+waiting for TWS reply on BAC .... done.
+waiting for TWS reply on BAX .... done.
+waiting for TWS reply on BC .... done.
+waiting for TWS reply on BFAM .... done.
+waiting for TWS reply on BLK .... done.
+waiting for TWS reply on BMY .... done.
+waiting for TWS reply on BX .... done.
+waiting for TWS reply on BYND .... done.
+waiting for TWS reply on C .... done.
+waiting for TWS reply on CAT .... done.
+waiting for TWS reply on CB .... done.
+waiting for TWS reply on CBOE .... done.
+waiting for TWS reply on CGC .... done.
+waiting for TWS reply on chgg .... done.
+waiting for TWS reply on CLR .... done.
+waiting for TWS reply on CLX .... done.
+waiting for TWS reply on CMCSA .... done.
+waiting for TWS reply on CME .... done.
+waiting for TWS reply on CMG .... done.
+waiting for TWS reply on COST .... done.
+waiting for TWS reply on COUP .... done.
+waiting for TWS reply on CPA .... done.
+waiting for TWS reply on CRM .... done.
+waiting for TWS reply on CROX .... done.
+waiting for TWS reply on CTXS .... done.
+waiting for TWS reply on CVS .... done.
+waiting for TWS reply on CVX .... done.
+waiting for TWS reply on D .... done.
+waiting for TWS reply on DAL .... done.
+waiting for TWS reply on DD .... done.
+waiting for TWS reply on DE .... done.
+waiting for TWS reply on DEO .... done.
+waiting for TWS reply on DG .... done.
+waiting for TWS reply on DHR .... done.
+waiting for TWS reply on DIS .... done.
+waiting for TWS reply on DOCU .... done.
+waiting for TWS reply on DPZ .... done.
+waiting for TWS reply on EBAY .... done.
+waiting for TWS reply on EL .... done.
+waiting for TWS reply on EQIX .... done.
+waiting for TWS reply on ETSY .... done.
+waiting for TWS reply on FB .... done.
+waiting for TWS reply on FDX .... done.
+waiting for TWS reply on fsly .... done.
+waiting for TWS reply on FTNT .... done.
+waiting for TWS reply on FXI .... done.
+waiting for TWS reply on GE .... done.
+waiting for TWS reply on GIS .... done.
+waiting for TWS reply on GLD .... done.
+waiting for TWS reply on GOOGL .... done.
+waiting for TWS reply on GPN .... done.
+waiting for TWS reply on GRMN .... done.
+waiting for TWS reply on GS .... done.
+waiting for TWS reply on HACK .... done.
+waiting for TWS reply on HD .... done.
+waiting for TWS reply on HLT .... done.
+waiting for TWS reply on HON .... done.
+waiting for TWS reply on HRL .... done.
+waiting for TWS reply on IBKR .... done.
+waiting for TWS reply on ICE .... done.
+waiting for TWS reply on IDXX .... done.
+waiting for TWS reply on IMMU .... done.
+waiting for TWS reply on INTC .... done.
+waiting for TWS reply on IRBT .... done.
+waiting for TWS reply on ISRG .... done.
+waiting for TWS reply on JPM .... done.
+waiting for TWS reply on KO .... done.
+waiting for TWS reply on LEN .... done.
+waiting for TWS reply on LLY .... done.
+waiting for TWS reply on lmnd .... done.
+waiting for TWS reply on LMT .... done.
+waiting for TWS reply on LOW .... done.
+waiting for TWS reply on LULU .... done.
+waiting for TWS reply on LUV .... done.
+waiting for TWS reply on lvgo .... done.
+waiting for TWS reply on LVS .... done.
+waiting for TWS reply on MA .... done.
+waiting for TWS reply on MAR .... done.
+waiting for TWS reply on MAS .... done.
+waiting for TWS reply on MCD .... done.
+waiting for TWS reply on MCK .... done.
+waiting for TWS reply on MDLZ .... done.
+waiting for TWS reply on MDT .... done.
+waiting for TWS reply on MELI .... done.
+waiting for TWS reply on MGM .... done.
+waiting for TWS reply on MJ .... done.
+waiting for TWS reply on MKTX .... done.
+waiting for TWS reply on MRVL .... done.
+waiting for TWS reply on MS .... done.
+waiting for TWS reply on MSCI .... done.
+waiting for TWS reply on MSFT .... done.
+waiting for TWS reply on MU .... done.
+waiting for TWS reply on NDAQ .... done.
+waiting for TWS reply on NEE .... done.
+waiting for TWS reply on NFLX .... done.
+waiting for TWS reply on nio .... done.
+waiting for TWS reply on NKE .... done.
+waiting for TWS reply on nkla .... done.
+waiting for TWS reply on NOW .... done.
+waiting for TWS reply on NUE .... done.
+waiting for TWS reply on nvax .... done.
+waiting for TWS reply on NVDA .... done.
+waiting for TWS reply on PANW .... done.
+waiting for TWS reply on PBR .... done.
+waiting for TWS reply on PD .... done.
+waiting for TWS reply on penn .... done.
+waiting for TWS reply on PEP .... done.
+waiting for TWS reply on PG .... done.
+waiting for TWS reply on PH .... done.
+waiting for TWS reply on PLNT .... done.
+waiting for TWS reply on PSA .... done.
+waiting for TWS reply on pton .... done.
+waiting for TWS reply on PYPL .... done.
+waiting for TWS reply on PZZA .... done.
+waiting for TWS reply on QCOM .... done.
+waiting for TWS reply on RACE .... done.
+waiting for TWS reply on RCL .... done.
+waiting for TWS reply on REGN .... done.
+waiting for TWS reply on ROKU .... done.
+waiting for TWS reply on SBAC .... done.
+waiting for TWS reply on SBUX .... done.
+waiting for TWS reply on SGEN .... done.
+waiting for TWS reply on SHOP .... done.
+waiting for TWS reply on SHW .... done.
+waiting for TWS reply on SNE .... done.
+waiting for TWS reply on SPGI .... done.
+waiting for TWS reply on SPOT .... done.
+waiting for TWS reply on SQ .... done.
+waiting for TWS reply on SWK .... done.
+waiting for TWS reply on SWKS .... done.
+waiting for TWS reply on T .... done.
+waiting for TWS reply on TDOC .... done.
+waiting for TWS reply on TJX .... done.
+waiting for TWS reply on TMUS .... done.
+waiting for TWS reply on TSLA .... done.
+waiting for TWS reply on TSN .... done.
+waiting for TWS reply on TTWO .... done.
+waiting for TWS reply on TWLO .... done.
+waiting for TWS reply on TWTR .... done.
+waiting for TWS reply on UBER .... done.
+waiting for TWS reply on ULTA .... done.
+waiting for TWS reply on UNH .... done.
+waiting for TWS reply on UPS .... done.
+waiting for TWS reply on URI .... done.
+waiting for TWS reply on V .... done.
+waiting for TWS reply on VEEV .... done.
+waiting for TWS reply on VHT .... done.
+waiting for TWS reply on VLO .... done.
+waiting for TWS reply on vslr .... done.
+waiting for TWS reply on VZ .... done.
+waiting for TWS reply on W .... done.
+waiting for TWS reply on WDAY .... done.
+waiting for TWS reply on WEN .... done.
+waiting for TWS reply on WIX .... done.
+waiting for TWS reply on wkhs .... done.
+waiting for TWS reply on WM .... done.
+waiting for TWS reply on WMT .... done.
+waiting for TWS reply on WORK .... done.
+waiting for TWS reply on WSM .... done.
+waiting for TWS reply on WYNN .... done.
+waiting for TWS reply on XLF .... done.
+waiting for TWS reply on XPO .... done.
+waiting for TWS reply on YUMC .... done.
+waiting for TWS reply on ZM .... done.
+waiting for TWS reply on ZTS .... done.
+> 
+> # tws Disconnect
+> twsDisconnect(tws)
+> 
+> # Closing the extra cores
+> stopCluster(cl)
+> 
+> # Setting the Time
+> E_Time <- Sys.time()
+> 
+> # Total Time
+> E_Time - S_Time
+Time difference of 6.972222 mins
+> 
+> DDBB_Global %>%
++     gather(variable, value, -Dates) %>% 
++     spread(Dates, value) %>%
++     write.csv(file = "Results/Portfolio_Performance.csv")
+> 
+> # Sending Email
+> email <- envelope() %>%
++     from("comunicaciones@kappa-capital.com") %>%
++     to("juan.p.koury@gmail.com") %>% 
++     cc("cjimenez.diaz@gmail.com") %>%
++     subject("Analisis Day Trading") %>%
++     text("Performance del Dia") %>%
++     attachment("Results/Portfolio_Performance.csv")
+> 
+> smtp <- server(host     = "smtp.ionos.es",
++                port     = 587,
++                username = "comunicaciones@kappa-capital.com",
++                password = "Diego@ndres1203",
++                insecure = FALSE)
+> 
+> smtp(email, verbose = FALSE)
+> 
+> 
+> proc.time()
+   user  system elapsed 
+  11.89    0.53  422.51 

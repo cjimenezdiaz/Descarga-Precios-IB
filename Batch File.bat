@@ -1,0 +1,1 @@
+"C:\Program Files\R\R-4.0.1\bin\R.exe" CMD BATCH "C:\Users\Administrator\Desktop\Forecast\Hist_Prices.R"
